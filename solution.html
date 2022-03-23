@@ -154,11 +154,11 @@
         "Example": "camerastoredirect:s:",
         "Values": {
             "NotConfigured": "Not Configured",
-            "Null": "Don't redirect any cameras",
+            "null": "Don't redirect any cameras",
             "*": "Redirect cameras",
             "List": "Manually enter a list of cameras"
         },
-        "DefaultValue": "Null",
+        "DefaultValue": "null",
         "ImageName": "camera-redirection.png",
         "InputType": "select",
         "SupportedClients": "Windows Desktop (MSRDC), iOS, MacOS"
@@ -301,7 +301,7 @@
         "Example": "drivestoredirect:s:",
         "Values": {
             "NotConfigured": "Not Configured",
-            "Null": "Don't redirect any drives",
+            "null": "Don't redirect any drives",
             "*": "Redirect all disk drives, including ones that are connected later",
             "dynamicdrives": "Dynamic drives: redirect any drives that are connected later",
             "manual": "Manually enter drives and labels"
@@ -462,10 +462,10 @@
         "Example": "devicestoredirect:s:",
         "Values": {
             "NotConfigured": "Not Configured",
-            "Null": "Don't redirect any devices",
+            "null": "Don't redirect any devices",
             "*": "Redirect portable media players based on the Media Transfer Protocol (MTP) and digital cameras based on the Picture Transfer Protocol (PTP)"
         },
-        "DefaultValue": "Null",
+        "DefaultValue": "null",
         "ImageName": "plug-and-play-device-redirection.png",
         "InputType": "select",
         "SupportedClients": "All"
@@ -749,7 +749,7 @@
             let output = "";
             for (let i = 0; i < properties.length; i++){
                 let value = document.getElementById(i).value;
-                if(!(value === "NotConfigured") || (value > 0 && properties[i].InputType === "number")){
+                if(!(value === "NotConfigured") || (!(value === "0") && properties[i].InputType === "number")){
                     console.log(value);
                     console.log(properties[i].InputType);
                     output += properties[i].Example + value + ";";
