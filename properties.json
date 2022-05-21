@@ -9,7 +9,9 @@
         "DefaultValue": "",
         "ImageName": "alternate-shell.png",
         "InputType": "text",
-        "SupportedClients": "All"
+        "Clients": "All",
+        "Dependency": "",
+        "ManualInput": false
     },
     {
         "Title": "Audio Output Location",
@@ -26,14 +28,16 @@
         "DefaultValue": "0",
         "ImageName": "audio-output-location.png",
         "InputType": "select",
-        "SupportedClients": "All"
+        "Clients": "All",
+        "Dependency": "",
+        "ManualInput": false
     },
     {
         "Title": "Azure AD Joined Authentication Protocol",
         "Type": "Connection Information",
         "SubType": "",
         "Description": "Specifies the authentication protocol to use whether the client is Azure AD joined or not. PKU2U connections are restricted to entering user name and password credentials when signing in to the session host.",
-        "Example": " targetisaadjoined:i:",
+        "Example": "targetisaadjoined:i:",
         "Values": {
             "NotConfigured": "Not Configured",
             "0": "Enable the Public Key User to User (PKU2U) protocol for authentication",
@@ -42,7 +46,9 @@
         "DefaultValue": "",
         "ImageName": "azure-ad-joined.png",
         "InputType": "select",
-        "SupportedClients": "All"
+        "Clients": "All",
+        "Dependency": "",
+        "ManualInput": false
     },
     {
         "Title": "Bandwidth Auto Detect",
@@ -58,7 +64,9 @@
         "DefaultValue": "1",
         "ImageName": "bandwidth-auto-detect.png",
         "InputType": "select",
-        "SupportedClients": "All"
+        "Clients": "All",
+        "Dependency": "",
+        "ManualInput": false
     },
     {
         "Title": "Camera Redirection",
@@ -70,12 +78,14 @@
             "NotConfigured": "Not Configured",
             "null": "Don't redirect any cameras",
             "*": "Redirect cameras",
-            "List": "Manually enter a list of cameras"
+            "manual": "Manually enter a list of cameras"
         },
         "DefaultValue": "null",
         "ImageName": "camera-redirection.png",
         "InputType": "select",
-        "SupportedClients": "Windows Desktop (MSRDC), iOS, MacOS"
+        "Clients": "Windows Desktop (MSRDC), iOS, macOS",
+        "Dependency": "",
+        "ManualInput": true
     },
     {
         "Title": "Clipboard Redirection",
@@ -91,7 +101,9 @@
         "DefaultValue": "1",
         "ImageName": "clipboard-redirection.png",
         "InputType": "select",
-        "SupportedClients": "All"
+        "Clients": "All",
+        "Dependency": "",
+        "ManualInput": false
     },
     {
         "Title": "COM Ports Redirection",
@@ -107,7 +119,9 @@
         "DefaultValue": "0",
         "ImageName": "com-ports-redirection.png",
         "InputType": "select",
-        "SupportedClients": "All"
+        "Clients": "All",
+        "Dependency": "",
+        "ManualInput": false
     },
     {
         "Title": "Compression",
@@ -123,7 +137,9 @@
         "DefaultValue": "1",
         "ImageName": "compression.png",
         "InputType": "select",
-        "SupportedClients": "All"
+        "Clients": "All",
+        "Dependency": "",
+        "ManualInput": false
     },
     {
         "Title": "Credential Security Support Provider",
@@ -139,19 +155,23 @@
         "DefaultValue": "1",
         "ImageName": "credential-security-support-provider.png",
         "InputType": "select",
-        "SupportedClients": "All"
+        "Clients": "All",
+        "Dependency": "",
+        "ManualInput": false
     },
     {
         "Title": "Desktop Height (Pixels)",
         "Type": "Display Settings",
         "SubType": "",
-        "Description": "The height (in pixels) of the remote session desktop.",
+        "Description": "The height (in pixels) of the remote session desktop.  Minimum allowed value is 200.  Maximum allowed value is 8192.",
         "Example": "desktopheight:i:",
         "Values": {},
         "DefaultValue": "0",
         "ImageName": "desktop-height.png",
         "InputType": "number",
-        "SupportedClients": "All"
+        "Clients": "All",
+        "Dependency": "",
+        "ManualInput": false
     },
     {
         "Title": "Desktop Scale Factor",
@@ -174,7 +194,9 @@
         "DefaultValue": "",
         "ImageName": "desktop-scale-factor.png",
         "InputType": "select",
-        "SupportedClients": "All"
+        "Clients": "All",
+        "Dependency": "",
+        "ManualInput": false
     },
     {
         "Title": "Desktop Size",
@@ -193,19 +215,23 @@
         "DefaultValue": "",
         "ImageName": "desktop-size.png",
         "InputType": "select",
-        "SupportedClients": "All"
+        "Clients": "All",
+        "Dependency": "",
+        "ManualInput": false
     },
     {
         "Title": "Desktop Width (Pixels)",
         "Type": "Display Settings",
         "SubType": "",
-        "Description": "The width (in pixels) of the remote session desktop.",
+        "Description": "The width (in pixels) of the remote session desktop.  Minimum allowed value is 200.  Maximum allowed value is 8192.",
         "Example": "desktopwidth:i:",
         "Values": {},
         "DefaultValue": "0",
         "ImageName": "desktop-width.png",
         "InputType": "number",
-        "SupportedClients": "All"
+        "Clients": "All",
+        "Dependency": "",
+        "ManualInput": false
     },
     {
         "Title": "Drive / Storage Redirection",
@@ -216,14 +242,16 @@
         "Values": {
             "NotConfigured": "Not Configured",
             "null": "Don't redirect any drives",
-            "*": "Redirect all disk drives, including ones that are connected later",
+            "*": "Redirect all disk drives, including ones that are connected later. This is the only setting that is compatible with the Web Client.",
             "dynamicdrives": "Dynamic drives: redirect any drives that are connected later",
             "manual": "Manually enter drives and labels"
         },
         "DefaultValue": "",
         "ImageName": "drive-storage-redirection.png",
         "InputType": "select",
-        "SupportedClients": "Windows Desktop (MSRDC), Android, iOS, macOS, Web Client"
+        "Clients": "Windows Desktop (MSRDC), Android, iOS, macOS, Web Client",
+        "Dependency": "",
+        "ManualInput": true
     },
     {
         "Title": "Dynamic Resolution",
@@ -239,7 +267,9 @@
         "DefaultValue": "1",
         "ImageName": "dynamic-resolution.png",
         "InputType": "select",
-        "SupportedClients": "Windows Desktop (MSRDC), Windows Store (URDC), iOS, macOS, Web Client"
+        "Clients": "Windows Desktop (MSRDC), Windows Store (URDC), iOS, macOS, Web Client",
+        "Dependency": "",
+        "ManualInput": false
     },
     {
         "Title": "Encoded Video Quality",
@@ -256,7 +286,9 @@
         "DefaultValue": "0",
         "ImageName": "encoded-video-quality.png",
         "InputType": "select",
-        "SupportedClients": "All"
+        "Clients": "All",
+        "Dependency": "",
+        "ManualInput": false
     },
     {
         "Title": "KDC Proxy Name",
@@ -268,7 +300,9 @@
         "DefaultValue": "",
         "ImageName": "kdc-proxy-name.png",
         "InputType": "text",
-        "SupportedClients": "All"
+        "Clients": "All",
+        "Dependency": "",
+        "ManualInput": false
     },
     {
         "Title": "Keyboard Redirection",
@@ -286,7 +320,9 @@
         "DefaultValue": "2",
         "ImageName": "keyboard-redirection.png",
         "InputType": "select",
-        "SupportedClients": "All"
+        "Clients": "All",
+        "Dependency": "",
+        "ManualInput": false
     },
     {
         "Title": "Maximize to Current Displays",
@@ -302,7 +338,9 @@
         "DefaultValue": "0",
         "ImageName": "maximize-to-current-displays.png",
         "InputType": "select",
-        "SupportedClients": "Windows Desktop (MSRDC)"
+        "Clients": "Windows Desktop (MSRDC)",
+        "Dependency": "Multiple Displays",
+        "ManualInput": false
     },
     {
         "Title": "Microphone Redirection",
@@ -318,7 +356,9 @@
         "DefaultValue": "0",
         "ImageName": "microphone-redirection.png",
         "InputType": "select",
-        "SupportedClients": "All"
+        "Clients": "All",
+        "Dependency": "",
+        "ManualInput": false
     },
     {
         "Title": "Multi to Single Display Switch",
@@ -334,7 +374,9 @@
         "DefaultValue": "0",
         "ImageName": "multi-to-single-display-switch.png",
         "InputType": "select",
-        "SupportedClients": "Windows Desktop (MSRDC)"
+        "Clients": "Windows Desktop (MSRDC)",
+        "Dependency": "Multiple Displays",
+        "ManualInput": false
     },
     {
         "Title": "Multiple Displays",
@@ -350,7 +392,9 @@
         "DefaultValue": "1",
         "ImageName": "multiple-displays.png",
         "InputType": "select",
-        "SupportedClients": "Windows Desktop (MSRDC), macOS"
+        "Clients": "Windows Desktop (MSRDC), macOS",
+        "Dependency": "",
+        "ManualInput": false
     },
     {
         "Title": "Network Auto Detect",
@@ -366,7 +410,9 @@
         "DefaultValue": "1",
         "ImageName": "network-auto-detect.png",
         "InputType": "select",
-        "SupportedClients": "All"
+        "Clients": "All",
+        "Dependency": "",
+        "ManualInput": false
     },
     {
         "Title": "MTP & PTP Device Redirection",
@@ -382,7 +428,9 @@
         "DefaultValue": "null",
         "ImageName": "plug-and-play-device-redirection.png",
         "InputType": "select",
-        "SupportedClients": "All"
+        "Clients": "All",
+        "Dependency": "",
+        "ManualInput": false
     },
     {
         "Title": "Printer Redirection",
@@ -398,7 +446,9 @@
         "DefaultValue": "1",
         "ImageName": "printer-redirection.png",
         "InputType": "select",
-        "SupportedClients": "Windows Desktop (MSRDC), macOS"
+        "Clients": "Windows Desktop (MSRDC), macOS",
+        "Dependency": "",
+        "ManualInput": false
     },
     {
         "Title": "Reconnection",
@@ -414,7 +464,9 @@
         "DefaultValue": "1",
         "ImageName": "reconnection.png",
         "InputType": "select",
-        "SupportedClients": "All"
+        "Clients": "All",
+        "Dependency": "",
+        "ManualInput": false
     },
     {
         "Title": "Redirect Video Encoding",
@@ -430,7 +482,9 @@
         "DefaultValue": "1",
         "ImageName": "redirect-video-encoding.png",
         "InputType": "select",
-        "SupportedClients": "All"
+        "Clients": "All",
+        "Dependency": "",
+        "ManualInput": false
     },
     {
         "Title": "Screen Mode",
@@ -446,7 +500,9 @@
         "DefaultValue": "2",
         "ImageName": "screen-mode.png",
         "InputType": "select",
-        "SupportedClients": "All"
+        "Clients": "All",
+        "Dependency": "",
+        "ManualInput": false
     },
     {
         "Title": "Selected Monitors",
@@ -462,7 +518,9 @@
         "DefaultValue": "",
         "ImageName": "selected-monitors.png",
         "InputType": "select",
-        "SupportedClients": "Windows Desktop (MSRDC)"
+        "Clients": "Windows Desktop (MSRDC)",
+        "Dependency": "Multiple Displays",
+        "ManualInput": true
     },
     {
         "Title": "Smart Card Redirection",
@@ -478,7 +536,9 @@
         "DefaultValue": "1",
         "ImageName": "smart-card-redirection.png",
         "InputType": "select",
-        "SupportedClients": "Windows Desktop (MSRDC), macOS"
+        "Clients": "Windows Desktop (MSRDC), macOS",
+        "Dependency": "",
+        "ManualInput": false
     },
     {
         "Title": "Smart Sizing",
@@ -494,7 +554,9 @@
         "DefaultValue": "0",
         "ImageName": "smart-sizing.png",
         "InputType": "select",
-        "SupportedClients": "Windows Desktop (MSRDC), Microsoft Store (URDC), macOS"
+        "Clients": "Windows Desktop (MSRDC), Microsoft Store (URDC), macOS",
+        "Dependency": "",
+        "ManualInput": false
     },
     {
         "Title": "USB Redirection",
@@ -511,7 +573,9 @@
         "DefaultValue": "",
         "ImageName": "usb-redirection.png",
         "InputType": "select",
-        "SupportedClients": "Windows Desktop (MSRDC)"
+        "Clients": "Windows Desktop (MSRDC)",
+        "Dependency": "",
+        "ManualInput": true
     },
     {
         "Title": "Video Playback",
@@ -527,6 +591,8 @@
         "DefaultValue": "1",
         "ImageName": "video-playback.png",
         "InputType": "select",
-        "SupportedClients": "All"
+        "Clients": "All",
+        "Dependency": "",
+        "ManualInput": false
     }
 ]
