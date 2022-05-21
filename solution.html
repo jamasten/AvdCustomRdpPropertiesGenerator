@@ -1,11 +1,14 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
     <meta charset='utf-8'>
     <meta http-equiv='X-UA-Compatible' content='IE=edge'>
     <title>AVD - Custom RDP Properties Generator</title>
     <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <meta name="description" content="Generate a custom RDP properties string to use with an Azure Virtual Desktop host pool.">
+    <meta name="keywords" content="Azure, Virtual, Desktop, Remote, Protocol, RDP, AVD, Properties">
+    <meta name="author" content="Jason Masten">
     <style>
         * {
             font-family: Verdana, Geneva, Tahoma, sans-serif;
@@ -17,43 +20,69 @@
         .bold {
             font-weight: bold;
         }
+        .dependency {
+            color: red;
+        }
+        .filter {
+            display: inline-block;
+            padding-bottom: 10px;
+        }
+        #filters input, #filters select {
+            margin-right: 20px;
+        }
         h1, h2, h3, h4 {
-            font-family: Calibri, 'Trebuchet MS', sans-serif;
+            font-family: 'Calibri', 'Trebuchet MS', sans-serif;
         }
         h1 {
             font-size: 2em;
         }
         h2 {
             font-size: 1.75em;
-            clear: both;
         }
-        #input {
+        input {
+            margin: 10px;
+            padding: 3px;
+        }
+        #properties {
             display: grid;
             grid-gap: 10px;
-            grid-template-columns: auto auto auto auto;
+            grid-template-columns: 24% 24% 24% 24%;
         }
         /* Layout - makes the three columns stack on top of each other instead of next to each other on smaller screens (1500px wide or less) */
         @media screen and (max-width: 1500px) {
-            #input {
-                grid-template-columns: auto auto auto;
+            #properties {
+                grid-template-columns: 32% 32% 32%;
             }
         }
         /* Layout - makes the three columns stack on top of each other instead of next to each other on smaller screens (1200px wide or less) */
         @media screen and (max-width: 1200px) {
-            #input {
-                grid-template-columns: 50% 50%;
+            #properties {
+                grid-template-columns: 49% 49%;
             }
         }
         /* Layout - makes the three columns stack on top of each other instead of next to each other on smaller screens (600px wide or less) */
         @media screen and (max-width: 600px) {
-            #input {
-                grid-template-columns: auto;
+            #properties {
+                grid-template-columns: 100%;
             }
         }
+        .property {
+            background-color: #F3F3F3;
+            border: 1px solid darkgray;
+            padding: 20px;
+        }
+        .property h2, .property input, .property p, .property select {
+            box-sizing: border-box;
+            display: block;
+            margin: 0 0 10px 0;
+            width: 100%;
+        }
         label {
+            font-weight: bold;
+        }
+        .property label {
             display: block;
             font-size: 1.2em;
-            font-weight: bold;
             margin: 0 0 10px 0;
         }
         #output {
@@ -63,565 +92,698 @@
             min-height: 30px;
             padding: 20px 50px;
         }
-        .property {
-            background-color: #F3F3F3;
-            border: 1px solid darkgray;
-            padding: 20px;
+        #outputProperties {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.2em;
+            font-weight: bold;
+            word-break: break-all;
+            word-wrap: break-word;
+        }
+        .important {
+            color: red;
+            font-weight: bold;
+        }
+        #search {
+            width: 300px;
+        }
+        select {
+            margin: 10px 20px 10px 10px;
+            padding: 3px;
+        }
+        select, select:active, select:focus {
+            border-radius: 0 !important;    
+            -webkit-border-radius: 0;
+            -moz-border-radius: 0;
         }
     </style>
 </head>
 
 <body>
     <header>
-        <h1>Azure Virtual Desktop: Custom RDP Properties Generator</h1>
-        <p>The RDP properties listed below are the currently supported properties with the Azure Virtual Desktop (AVD).  Use the drop down menus to create a list of customized RDP properties that may be used with an AVD host pool.</p>
+        <h1>Azure Virtual Desktop: RDP Properties Generator</h1>
     </header>
-    <main id="input"></main>
-    <footer>
+    <main>
+        <h2>Filters</h2>
+        <div id="filters">
+            
+            <div class="filter">
+                <label for="search">Search:</label>
+                <input type="text" id="title" name="search" onkeyup="filterProperties()" placeholder="Filter by Property Name">
+            </div>
+
+            <div class="filter">
+                <label for="clients">Supported Client:</label>
+                <select id="client" name="clients" onchange="filterProperties()">
+                    <option value="None"></option>
+                    <option value="All">All</option>
+                    <option value="Windows Desktop (MSRDC)">Windows Desktop (MSRDC)</option>
+                    <option value="Windows Store (URDC)">Windows Store (URDC)</option>
+                    <option value="Android">Android</option>
+                    <option value="iOS">iOS</option>
+                    <option value="macOS">macOS</option>
+                    <option value="Web Client">Web Client</option>
+                </select>
+            </div>
+
+            <div class="filter">
+                <label for="types">Type:</label>
+                <select id="type" name="types" onchange="filterProperties()">
+                    <option value="NONE"></option>
+                    <option value="Connection Information">Connection Information</option>
+                    <option value="Device Redirection">Device Redirection</option>
+                    <option value="Display Settings">Display Settings</option>
+                    <option value="Session Behavior">Session Behavior</option>
+                </select>
+            </div>
+
+            <div class="filter">
+                <label for="subtypes">Subtype:</label>
+                <select id="subtype" name="subtypes" disabled="disabled" onchange="filterProperties()">
+                    <option value="NONE"></option>
+                    <option value="Audio & Video">Audio & Video</option>
+                    <option value="Local Devices & Resources">Local Devices & Resources</option>
+                </select>
+            </div>
+
+        </div>
+        <h2>Properties</h2>
+        <p>The boxes below contain all the supported RDP properties for Azure Virtual Desktop (AVD).  Use the drop down menus to create a customized RDP properties string that may be used with an AVD host pool, either in the portal or using code.</p>
+        <div id="properties"></div>
         <h2>Output:</h2>
         <p>The box below contains the output from the RDP property selections.</p>
-        <p>Please refer to this <a href="https://docs.microsoft.com/en-us/azure/virtual-desktop/customize-rdp-properties">documentation</a> to add your customized RDP properties to your Azure Virtual Desktop host pool using PowerShell.</p>
         <div id="output"><p id="outputProperties"></p></div>
+        <p class="important">NOTE: The above text is automatically copied to your clipboard every time it is updated</p>
+        <p>Please refer to this <a href="https://docs.microsoft.com/en-us/azure/virtual-desktop/customize-rdp-properties">documentation</a> to add your customized RDP properties to your Azure Virtual Desktop host pool using PowerShell.</p>
+    </main>
+    <footer>
+
     </footer>
     <script type="text/javascript">
         const properties = [
-    {
-        "Title": "Alternate Shell",
-        "Type": "Connection Information",
-        "SubType": "",
-        "Description": "Specifies a program to be started automatically when you connect to a remote computer. The value should be a valid path to an executable file. This setting only works when connecting to servers.",
-        "Example": "alternate shell:s:",
-        "Values": [],
-        "DefaultValue": "",
-        "ImageName": "alternate-shell.png",
-        "InputType": "text",
-        "SupportedClients": "All"
-    },
-    {
-        "Title": "Audio Output Location",
-        "Type": "Device Redirection",
-        "SubType": "Audio & Video",
-        "Description": "Determines how sounds captured (recorded) on the local computer are handled when you are connected to the remote computer.",
-        "Example": "audiomode:i:",
-        "Values": {
-            "NotConfigured": "Not Configured",
-            "0": "Play sounds on the local computer",
-            "1": "Play sounds on the remote computer",
-            "2": "Do not play sounds"
-        },
-        "DefaultValue": "0",
-        "ImageName": "audio-output-location.png",
-        "InputType": "select",
-        "SupportedClients": "All"
-    },
-    {
-        "Title": "Azure AD Joined Authentication Protocol",
-        "Type": "Connection Information",
-        "SubType": "",
-        "Description": "Specifies the authentication protocol to use whether the client is Azure AD joined or not. PKU2U connections are restricted to entering user name and password credentials when signing in to the session host.",
-        "Example": " targetisaadjoined:i:",
-        "Values": {
-            "NotConfigured": "Not Configured",
-            "0": "Enable the Public Key User to User (PKU2U) protocol for authentication",
-            "1": "Enable the Remote Desktop Services Transport Layer Security (RDSTLS) protocol for authentication"
-        },
-        "DefaultValue": "",
-        "ImageName": "azure-ad-joined.png",
-        "InputType": "select",
-        "SupportedClients": "All"
-    },
-    {
-        "Title": "Bandwidth Auto Detect",
-        "Type": "Session Behavior",
-        "SubType": "",
-        "Description": "Determines whether to use automatic network bandwidth detection or not. Requires the option bandwidthautodetect to be set and correlates with connection type 7.",
-        "Example": "bandwidthautodetect:i:",
-        "Values": {
-            "NotConfigured": "Not Configured",
-            "0": "Don't use automatic network bandwidth detection",
-            "1": "Use automatic network bandwidth"
-        },
-        "DefaultValue": "1",
-        "ImageName": "bandwidth-auto-detect.png",
-        "InputType": "select",
-        "SupportedClients": "All"
-    },
-    {
-        "Title": "Camera Redirection",
-        "Type": "Device Redirection",
-        "SubType": "Local Devices & Resources",
-        "Description": "Configures which cameras to redirect. This setting uses a semicolon-delimited list of KSCATEGORY_VIDEO_CAMERA interfaces of cameras enabled for redirection.",
-        "Example": "camerastoredirect:s:",
-        "Values": {
-            "NotConfigured": "Not Configured",
-            "null": "Don't redirect any cameras",
-            "*": "Redirect cameras",
-            "List": "Manually enter a list of cameras"
-        },
-        "DefaultValue": "null",
-        "ImageName": "camera-redirection.png",
-        "InputType": "select",
-        "SupportedClients": "Windows Desktop (MSRDC), iOS, MacOS"
-    },
-    {
-        "Title": "Clipboard Redirection",
-        "Type": "Device Redirection",
-        "SubType": "Local Devices & Resources",
-        "Description": "Determines whether the clipboard on the client computer will be redirected and available in the remote session and vice versa.",
-        "Example": "redirectclipboard:i:",
-        "Values": {
-            "NotConfigured": "Not Configured",
-            "0": "Clipboard on local computer isn't available in remote session",
-            "1": "Clipboard on local computer is available in remote session"
-        },
-        "DefaultValue": "1",
-        "ImageName": "clipboard-redirection.png",
-        "InputType": "select",
-        "SupportedClients": "All"
-    },
-    {
-        "Title": "COM Ports Redirection",
-        "Type": "Device Redirection",
-        "SubType": "Local Devices & Resources",
-        "Description": "Determines whether the COM (serial) ports on the client computer will be redirected and available in the remote session.",
-        "Example": "redirectcomports:i:",
-        "Values": {
-            "NotConfigured": "Not Configured",
-            "0": "COM ports on the local computer are not available in the remote session",
-            "1": "COM ports on the local computer are available in the remote session"
-        },
-        "DefaultValue": "0",
-        "ImageName": "com-ports-redirection.png",
-        "InputType": "select",
-        "SupportedClients": "All"
-    },
-    {
-        "Title": "Compression",
-        "Type": "Session Behavior",
-        "SubType": "",
-        "Description": "Determines whether the connection should use bulk compression.",
-        "Example": "compression:i:",
-        "Values": {
-            "NotConfigured": "Not Configured",
-            "0": "Disable RDP bulk compression",
-            "1": "Enable RDP bulk compression"
-        },
-        "DefaultValue": "1",
-        "ImageName": "compression.png",
-        "InputType": "select",
-        "SupportedClients": "All"
-    },
-    {
-        "Title": "Credential Security Support Provider",
-        "Type": "Connection Information",
-        "SubType": "",
-        "Description": "Determines whether Remote Desktop will use CredSSP for authentication if it's available.",
-        "Example": "enablecredsspsupport:i:",
-        "Values": {
-            "NotConfigured": "Not Configured",
-            "0": "RDP will not use CredSSP, even if the operating system supports CredSSP",
-            "1": "RDP will use CredSSP if the operating system supports CredSSP"
-        },
-        "DefaultValue": "1",
-        "ImageName": "credential-security-support-provider.png",
-        "InputType": "select",
-        "SupportedClients": "All"
-    },
-    {
-        "Title": "Desktop Height (Pixels)",
-        "Type": "Display Settings",
-        "SubType": "",
-        "Description": "The height (in pixels) of the remote session desktop.",
-        "Example": "desktopheight:i:",
-        "Values": {},
-        "DefaultValue": "0",
-        "ImageName": "desktop-height.png",
-        "InputType": "number",
-        "SupportedClients": "All"
-    },
-    {
-        "Title": "Desktop Scale Factor",
-        "Type": "Display Settings",
-        "SubType": "",
-        "Description": "Specifies the scale factor of the remote session to make the content appear larger.",
-        "Example": "desktopscalefactor:i:",
-        "Values": {
-            "NotConfigured": "Not Configured",
-            "100": "100", 
-            "125": "125", 
-            "150": "150", 
-            "175": "175", 
-            "200": "200", 
-            "250": "250", 
-            "300": "300", 
-            "400": "400", 
-            "500": "500"
-        },
-        "DefaultValue": "",
-        "ImageName": "desktop-scale-factor.png",
-        "InputType": "select",
-        "SupportedClients": "All"
-    },
-    {
-        "Title": "Desktop Size",
-        "Type": "Display Settings",
-        "SubType": "",
-        "Description": "Specifies pre-defined dimensions of the remote session desktop.",
-        "Example": "desktop size id:i:",
-        "Values": {
-            "NotConfigured": "Not Configured",
-            "0": "640 × 480",
-            "1": "800 × 600",
-            "2": "1024 × 768",
-            "3": "1280 × 1024",
-            "4": "1600 × 1200"
-        },
-        "DefaultValue": "",
-        "ImageName": "desktop-size.png",
-        "InputType": "select",
-        "SupportedClients": "All"
-    },
-    {
-        "Title": "Desktop Width (Pixels)",
-        "Type": "Display Settings",
-        "SubType": "",
-        "Description": "The width (in pixels) of the remote session desktop.",
-        "Example": "desktopwidth:i:",
-        "Values": {},
-        "DefaultValue": "0",
-        "ImageName": "desktop-width.png",
-        "InputType": "number",
-        "SupportedClients": "All"
-    },
-    {
-        "Title": "Drive / Storage Redirection",
-        "Type": "Device Redirection",
-        "SubType": "Local Devices & Resources",
-        "Description": "Determines which local disk drives on the client computer will be redirected and available in the remote session.",
-        "Example": "drivestoredirect:s:",
-        "Values": {
-            "NotConfigured": "Not Configured",
-            "null": "Don't redirect any drives",
-            "*": "Redirect all disk drives, including ones that are connected later",
-            "dynamicdrives": "Dynamic drives: redirect any drives that are connected later",
-            "manual": "Manually enter drives and labels"
-        },
-        "DefaultValue": "",
-        "ImageName": "drive-storage-redirection.png",
-        "InputType": "select",
-        "SupportedClients": "Windows Desktop (MSRDC), Android, iOS, macOS, Web Client"
-    },
-    {
-        "Title": "Dynamic Resolution",
-        "Type": "Display Settings",
-        "SubType": "",
-        "Description": "Determines whether the resolution of the remote session is automatically updated when the local window is resized.",
-        "Example": "dynamic resolution:i:",
-        "Values": {
-            "NotConfigured": "Not Configured",
-            "0": "Session resolution remains static for the duration of the session",
-            "1": "Session resolution updates as the local window resizes"
-        },
-        "DefaultValue": "1",
-        "ImageName": "dynamic-resolution.png",
-        "InputType": "select",
-        "SupportedClients": "Windows Desktop (MSRDC), Windows Store (URDC), iOS, macOS, Web Client"
-    },
-    {
-        "Title": "Encoded Video Quality",
-        "Type": "Device Redirection",
-        "SubType": "Audio & Video",
-        "Description": "Controls the quality of encoded video.",
-        "Example": "redirected video capture encoding quality:i:",
-        "Values": {
-            "NotConfigured": "Not Configured",
-            "0": "High compression video. Quality may suffer when there is a lot of motion",
-            "1": "Medium compression",
-            "2": "Low compression video with high picture quality"
-        },
-        "DefaultValue": "0",
-        "ImageName": "encoded-video-quality.png",
-        "InputType": "select",
-        "SupportedClients": "All"
-    },
-    {
-        "Title": "KDC Proxy Name",
-        "Type": "Connection Information",
-        "SubType": "",
-        "Description": "The fully qualified domain name of the desired KDC proxy",
-        "Example": "kdcproxyname:s:",
-        "Values": {},
-        "DefaultValue": "",
-        "ImageName": "kdc-proxy-name.png",
-        "InputType": "text",
-        "SupportedClients": "All"
-    },
-    {
-        "Title": "Keyboard Redirection",
-        "Type": "Device Redirection",
-        "SubType": "Local Devices & Resources",
-        "Description": "Determines when Windows key combinations (WIN key, ALT+TAB) are applied to the remote session for desktop and RemoteApp connections.",
-        "Example": "keyboardhook:i:",
-        "Values": {
-            "NotConfigured": "Not Configured",
-            "0": "Windows key combinations are applied on the local computer",
-            "1": "(Desktop only) Windows key combinations are applied on the remote computer when in focus",
-            "2": "(Desktop only) Windows key combinations are applied on the remote computer in full screen mode only",
-            "3": "(RemoteApp only) Windows key combinations are applied on the RemoteApp when in focus. Recommended to use this value only when publishing the Remote Desktop Connection app (mstsc.exe) from the host pool on Azure Virtual Desktop. This value is only supported when using the Windows Desktop client (MSRDC)."
-        },
-        "DefaultValue": "2",
-        "ImageName": "keyboard-redirection.png",
-        "InputType": "select",
-        "SupportedClients": "All"
-    },
-    {
-        "Title": "Maximize to Current Displays",
-        "Type": "Display Settings",
-        "SubType": "",
-        "Description": "Determines which display the remote session goes full screen on when maximizing. Requires use multimon to be set to 1.",
-        "Example": "maximizetocurrentdisplays:i:",
-        "Values": {
-            "NotConfigured": "Not Configured",
-            "0": "Session goes full screen on the displays initially selected when maximizing",
-            "1": "Session dynamically goes full screen on the displays touched by the session window when maximizing"
-        },
-        "DefaultValue": "0",
-        "ImageName": "maximize-to-current-displays.png",
-        "InputType": "select",
-        "SupportedClients": "Windows Desktop (MSRDC)"
-    },
-    {
-        "Title": "Microphone Redirection",
-        "Type": "Device Redirection",
-        "SubType": "Audio & Video",
-        "Description": "Determines how sounds captured (recorded) on the local computer are handled when you are connected to the remote computer.",
-        "Example": "audiocapturemode:i:",
-        "Values": {
-            "NotConfigured": "Not Configured",
-            "0": "Disable audio capture from the local device",
-            "1": "Enable audio capture from the local device and redirection to an audio application in the remote session"
-        },
-        "DefaultValue": "0",
-        "ImageName": "microphone-redirection.png",
-        "InputType": "select",
-        "SupportedClients": "All"
-    },
-    {
-        "Title": "Multi to Single Display Switch",
-        "Type": "Display Settings",
-        "SubType": "",
-        "Description": "Determines whether a multi display remote session automatically switches to single display when exiting full screen. Requires use multimon to be set to 1.",
-        "Example": "singlemoninwindowedmode:i:",
-        "Values": {
-            "NotConfigured": "Not Configured",
-            "0": "Session retains all displays when exiting full screen",
-            "1": "Session switches to single display when exiting full screen"
-        },
-        "DefaultValue": "0",
-        "ImageName": "multi-to-single-display-switch.png",
-        "InputType": "select",
-        "SupportedClients": "Windows Desktop (MSRDC)"
-    },
-    {
-        "Title": "Multiple Displays",
-        "Type": "Display Settings",
-        "SubType": "",
-        "Description": "Determines whether the session should use true multiple monitor support when connecting to the remote computer.",
-        "Example": "use multimon:i:",
-        "Values": {
-            "NotConfigured": "Not Configured",
-            "0": "Don't enable multiple display support",
-            "1": "Enable multiple display support"
-        },
-        "DefaultValue": "1",
-        "ImageName": "multiple-displays.png",
-        "InputType": "select",
-        "SupportedClients": "Windows Desktop (MSRDC), macOS"
-    },
-    {
-        "Title": "Network Auto Detect",
-        "Type": "Session Behavior",
-        "SubType": "",
-        "Description": "Enables the option for automatic detection of the network type. Used in conjunction with networkautodetect. Also see connection type.",
-        "Example": "networkautodetect:i:",
-        "Values": {
-            "NotConfigured": "Not Configured",
-            "0": "Disable automatic network type detection",
-            "1": "Enable automatic network type connection"
-        },
-        "DefaultValue": "1",
-        "ImageName": "network-auto-detect.png",
-        "InputType": "select",
-        "SupportedClients": "All"
-    },
-    {
-        "Title": "MTP & PTP Device Redirection",
-        "Type": "Device Redirection",
-        "SubType": "Local Devices & Resources",
-        "Description": "Determines which devices on the local computer will be redirected and available in the remote session.",
-        "Example": "devicestoredirect:s:",
-        "Values": {
-            "NotConfigured": "Not Configured",
-            "null": "Don't redirect any devices",
-            "*": "Redirect portable media players based on the Media Transfer Protocol (MTP) and digital cameras based on the Picture Transfer Protocol (PTP)"
-        },
-        "DefaultValue": "null",
-        "ImageName": "plug-and-play-device-redirection.png",
-        "InputType": "select",
-        "SupportedClients": "All"
-    },
-    {
-        "Title": "Printer Redirection",
-        "Type": "Device Redirection",
-        "SubType": "Local Devices & Resources",
-        "Description": "Determines whether printers configured on the client computer will be redirected and available in the remote session.",
-        "Example": "redirectprinters:i:",
-        "Values": {
-            "NotConfigured": "Not Configured",
-            "0": "The printers on the local computer are not available in the remote session",
-            "1": "The printers on the local computer are available in the remote session"
-        },
-        "DefaultValue": "1",
-        "ImageName": "printer-redirection.png",
-        "InputType": "select",
-        "SupportedClients": "Windows Desktop (MSRDC), macOS"
-    },
-    {
-        "Title": "Reconnection",
-        "Type": "Session Behavior",
-        "SubType": "",
-        "Description": "Determines whether the client will automatically try to reconnect to the remote computer if the connection is dropped.",
-        "Example": "autoreconnection enabled:i:",
-        "Values": {
-            "NotConfigured": "Not Configured",
-            "0": "Client does not automatically try to reconnect",
-            "1": "Client automatically tries to reconnect"
-        },
-        "DefaultValue": "1",
-        "ImageName": "reconnection.png",
-        "InputType": "select",
-        "SupportedClients": "All"
-    },
-    {
-        "Title": "Redirect Video Encoding",
-        "Type": "Device Redirection",
-        "SubType": "Audio & Video",
-        "Description": "Enables or disables encoding of redirected video.",
-        "Example": "encode redirected video capture:i:",
-        "Values": {
-            "NotConfigured": "Not Configured",
-            "0": "Disable encoding of redirected video",
-            "1": "Enable encoding of redirected video"
-        },
-        "DefaultValue": "1",
-        "ImageName": "redirect-video-encoding.png",
-        "InputType": "select",
-        "SupportedClients": "All"
-    },
-    {
-        "Title": "Screen Mode",
-        "Type": "Display Settings",
-        "SubType": "",
-        "Description": "Determines whether the remote session window appears full screen when you connect to the remote computer.",
-        "Example": "screen mode id:i:",
-        "Values": {
-            "NotConfigured": "Not Configured",
-            "1": "The remote session will appear in a window",
-            "2": "The remote session will appear full screen"
-        },
-        "DefaultValue": "2",
-        "ImageName": "screen-mode.png",
-        "InputType": "select",
-        "SupportedClients": "All"
-    },
-    {
-        "Title": "Selected Monitors",
-        "Type": "Display Settings",
-        "SubType": "",
-        "Description": "Specifies which local displays to use from the remote session. The selected displays must be contiguous. Requires use multimon to be set to 1.",
-        "Example": "selectedmonitors:s:",
-        "Values": {
-            "NotConfigured": "Not Configured",
-            "null": "All displays",
-            "manual": "Manually enter list of machine specific display IDs"
-        },
-        "DefaultValue": "",
-        "ImageName": "selected-monitors.png",
-        "InputType": "select",
-        "SupportedClients": "Windows Desktop (MSRDC)"
-    },
-    {
-        "Title": "Smart Card Redirection",
-        "Type": "Device Redirection",
-        "SubType": "Local Devices & Resources",
-        "Description": "Determines whether smart card devices on the local computer will be redirected and available in the remote session.",
-        "Example": "redirectsmartcards:i:",
-        "Values": {
-            "NotConfigured": "Not Configured",
-            "0": "The smart card device on the local computer is not available in the remote session",
-            "1": "The smart card device on the local computer is available in the remote session"
-        },
-        "DefaultValue": "1",
-        "ImageName": "smart-card-redirection.png",
-        "InputType": "select",
-        "SupportedClients": "Windows Desktop (MSRDC), macOS"
-    },
-    {
-        "Title": "Smart Sizing",
-        "Type": "Display Settings",
-        "SubType": "",
-        "Description": "Determines whether the client computer should scale the content on the remote computer to fit the window size of the client computer when the window is resized.",
-        "Example": "smart sizing:i:",
-        "Values": {
-            "NotConfigured": "Not Configured",
-            "0": "The local window content won't scale when resized",
-            "1": "The local window content will scale when resized"
-        },
-        "DefaultValue": "0",
-        "ImageName": "smart-sizing.png",
-        "InputType": "select",
-        "SupportedClients": "Windows Desktop (MSRDC), Microsoft Store (URDC), macOS"
-    },
-    {
-        "Title": "USB Redirection",
-        "Type": "Device Redirection",
-        "SubType": "Local Devices & Resources",
-        "Description": "Determines which supported RemoteFX USB devices on the client computer will be redirected and available in the remote session when you connect to a remote session that supports RemoteFX USB redirection.",
-        "Example": "usbdevicestoredirect:s:",
-        "Values": {
-            "NotConfigured": "Not Configured",
-            "null": "Don't redirect any USB devices",
-            "*": "Redirect all USB devices that are not already redirected by another high-level redirection",
-            "manual": "Redirect all devices that are members of the specified device setup class or devices defined by specific instance ID"
-        },
-        "DefaultValue": "",
-        "ImageName": "usb-redirection.png",
-        "InputType": "select",
-        "SupportedClients": "Windows Desktop (MSRDC)"
-    },
-    {
-        "Title": "Video Playback",
-        "Type": "Session Behavior",
-        "SubType": "",
-        "Description": "Determines whether RDC will use RDP efficient multimedia streaming for video playback.",
-        "Example": "videoplaybackmode:i:",
-        "Values": {
-            "NotConfigured": "Not Configured",
-            "0": "Don't use RDP efficient multimedia streaming for video playback",
-            "1": "Use RDP-efficient multimedia streaming for video playback when possible"
-        },
-        "DefaultValue": "1",
-        "ImageName": "video-playback.png",
-        "InputType": "select",
-        "SupportedClients": "All"
-    }
-];
+            {
+                "Title": "Alternate Shell",
+                "Type": "Connection Information",
+                "SubType": "",
+                "Description": "Specifies a program to be started automatically when you connect to a remote computer. The value should be a valid path to an executable file. This setting only works when connecting to servers.",
+                "Example": "alternate shell:s:",
+                "Values": [],
+                "DefaultValue": "",
+                "ImageName": "alternate-shell.png",
+                "InputType": "text",
+                "Clients": "All",
+                "Dependency": "",
+                "ManualInput": false
+            },
+            {
+                "Title": "Audio Output Location",
+                "Type": "Device Redirection",
+                "SubType": "Audio & Video",
+                "Description": "Determines how sounds captured (recorded) on the local computer are handled when you are connected to the remote computer.",
+                "Example": "audiomode:i:",
+                "Values": {
+                    "NotConfigured": "Not Configured",
+                    "0": "Play sounds on the local computer",
+                    "1": "Play sounds on the remote computer",
+                    "2": "Do not play sounds"
+                },
+                "DefaultValue": "0",
+                "ImageName": "audio-output-location.png",
+                "InputType": "select",
+                "Clients": "All",
+                "Dependency": "",
+                "ManualInput": false
+            },
+            {
+                "Title": "Azure AD Joined Authentication Protocol",
+                "Type": "Connection Information",
+                "SubType": "",
+                "Description": "Specifies the authentication protocol to use whether the client is Azure AD joined or not. PKU2U connections are restricted to entering user name and password credentials when signing in to the session host.",
+                "Example": "targetisaadjoined:i:",
+                "Values": {
+                    "NotConfigured": "Not Configured",
+                    "0": "Enable the Public Key User to User (PKU2U) protocol for authentication",
+                    "1": "Enable the Remote Desktop Services Transport Layer Security (RDSTLS) protocol for authentication"
+                },
+                "DefaultValue": "",
+                "ImageName": "azure-ad-joined.png",
+                "InputType": "select",
+                "Clients": "All",
+                "Dependency": "",
+                "ManualInput": false
+            },
+            {
+                "Title": "Bandwidth Auto Detect",
+                "Type": "Session Behavior",
+                "SubType": "",
+                "Description": "Determines whether to use automatic network bandwidth detection or not. Requires the option bandwidthautodetect to be set and correlates with connection type 7.",
+                "Example": "bandwidthautodetect:i:",
+                "Values": {
+                    "NotConfigured": "Not Configured",
+                    "0": "Don't use automatic network bandwidth detection",
+                    "1": "Use automatic network bandwidth"
+                },
+                "DefaultValue": "1",
+                "ImageName": "bandwidth-auto-detect.png",
+                "InputType": "select",
+                "Clients": "All",
+                "Dependency": "",
+                "ManualInput": false
+            },
+            {
+                "Title": "Camera Redirection",
+                "Type": "Device Redirection",
+                "SubType": "Local Devices & Resources",
+                "Description": "Configures which cameras to redirect. This setting uses a semicolon-delimited list of KSCATEGORY_VIDEO_CAMERA interfaces of cameras enabled for redirection.",
+                "Example": "camerastoredirect:s:",
+                "Values": {
+                    "NotConfigured": "Not Configured",
+                    "null": "Don't redirect any cameras",
+                    "*": "Redirect cameras",
+                    "manual": "Manually enter a list of cameras"
+                },
+                "DefaultValue": "null",
+                "ImageName": "camera-redirection.png",
+                "InputType": "select",
+                "Clients": "Windows Desktop (MSRDC), iOS, macOS",
+                "Dependency": "",
+                "ManualInput": true
+            },
+            {
+                "Title": "Clipboard Redirection",
+                "Type": "Device Redirection",
+                "SubType": "Local Devices & Resources",
+                "Description": "Determines whether the clipboard on the client computer will be redirected and available in the remote session and vice versa.",
+                "Example": "redirectclipboard:i:",
+                "Values": {
+                    "NotConfigured": "Not Configured",
+                    "0": "Clipboard on local computer isn't available in remote session",
+                    "1": "Clipboard on local computer is available in remote session"
+                },
+                "DefaultValue": "1",
+                "ImageName": "clipboard-redirection.png",
+                "InputType": "select",
+                "Clients": "All",
+                "Dependency": "",
+                "ManualInput": false
+            },
+            {
+                "Title": "COM Ports Redirection",
+                "Type": "Device Redirection",
+                "SubType": "Local Devices & Resources",
+                "Description": "Determines whether the COM (serial) ports on the client computer will be redirected and available in the remote session.",
+                "Example": "redirectcomports:i:",
+                "Values": {
+                    "NotConfigured": "Not Configured",
+                    "0": "COM ports on the local computer are not available in the remote session",
+                    "1": "COM ports on the local computer are available in the remote session"
+                },
+                "DefaultValue": "0",
+                "ImageName": "com-ports-redirection.png",
+                "InputType": "select",
+                "Clients": "All",
+                "Dependency": "",
+                "ManualInput": false
+            },
+            {
+                "Title": "Compression",
+                "Type": "Session Behavior",
+                "SubType": "",
+                "Description": "Determines whether the connection should use bulk compression.",
+                "Example": "compression:i:",
+                "Values": {
+                    "NotConfigured": "Not Configured",
+                    "0": "Disable RDP bulk compression",
+                    "1": "Enable RDP bulk compression"
+                },
+                "DefaultValue": "1",
+                "ImageName": "compression.png",
+                "InputType": "select",
+                "Clients": "All",
+                "Dependency": "",
+                "ManualInput": false
+            },
+            {
+                "Title": "Credential Security Support Provider",
+                "Type": "Connection Information",
+                "SubType": "",
+                "Description": "Determines whether Remote Desktop will use CredSSP for authentication if it's available.",
+                "Example": "enablecredsspsupport:i:",
+                "Values": {
+                    "NotConfigured": "Not Configured",
+                    "0": "RDP will not use CredSSP, even if the operating system supports CredSSP",
+                    "1": "RDP will use CredSSP if the operating system supports CredSSP"
+                },
+                "DefaultValue": "1",
+                "ImageName": "credential-security-support-provider.png",
+                "InputType": "select",
+                "Clients": "All",
+                "Dependency": "",
+                "ManualInput": false
+            },
+            {
+                "Title": "Desktop Height (Pixels)",
+                "Type": "Display Settings",
+                "SubType": "",
+                "Description": "The height (in pixels) of the remote session desktop.  Minimum allowed value is 200.  Maximum allowed value is 8192.",
+                "Example": "desktopheight:i:",
+                "Values": {},
+                "DefaultValue": "0",
+                "ImageName": "desktop-height.png",
+                "InputType": "number",
+                "Clients": "All",
+                "Dependency": "",
+                "ManualInput": false
+            },
+            {
+                "Title": "Desktop Scale Factor",
+                "Type": "Display Settings",
+                "SubType": "",
+                "Description": "Specifies the scale factor of the remote session to make the content appear larger.",
+                "Example": "desktopscalefactor:i:",
+                "Values": {
+                    "NotConfigured": "Not Configured",
+                    "100": "100", 
+                    "125": "125", 
+                    "150": "150", 
+                    "175": "175", 
+                    "200": "200", 
+                    "250": "250", 
+                    "300": "300", 
+                    "400": "400", 
+                    "500": "500"
+                },
+                "DefaultValue": "",
+                "ImageName": "desktop-scale-factor.png",
+                "InputType": "select",
+                "Clients": "All",
+                "Dependency": "",
+                "ManualInput": false
+            },
+            {
+                "Title": "Desktop Size",
+                "Type": "Display Settings",
+                "SubType": "",
+                "Description": "Specifies pre-defined dimensions of the remote session desktop.",
+                "Example": "desktop size id:i:",
+                "Values": {
+                    "NotConfigured": "Not Configured",
+                    "0": "640 × 480",
+                    "1": "800 × 600",
+                    "2": "1024 × 768",
+                    "3": "1280 × 1024",
+                    "4": "1600 × 1200"
+                },
+                "DefaultValue": "",
+                "ImageName": "desktop-size.png",
+                "InputType": "select",
+                "Clients": "All",
+                "Dependency": "",
+                "ManualInput": false
+            },
+            {
+                "Title": "Desktop Width (Pixels)",
+                "Type": "Display Settings",
+                "SubType": "",
+                "Description": "The width (in pixels) of the remote session desktop.  Minimum allowed value is 200.  Maximum allowed value is 8192.",
+                "Example": "desktopwidth:i:",
+                "Values": {},
+                "DefaultValue": "0",
+                "ImageName": "desktop-width.png",
+                "InputType": "number",
+                "Clients": "All",
+                "Dependency": "",
+                "ManualInput": false
+            },
+            {
+                "Title": "Drive / Storage Redirection",
+                "Type": "Device Redirection",
+                "SubType": "Local Devices & Resources",
+                "Description": "Determines which local disk drives on the client computer will be redirected and available in the remote session.",
+                "Example": "drivestoredirect:s:",
+                "Values": {
+                    "NotConfigured": "Not Configured",
+                    "null": "Don't redirect any drives",
+                    "*": "Redirect all disk drives, including ones that are connected later. This is the only setting that is compatible with the Web Client.",
+                    "dynamicdrives": "Dynamic drives: redirect any drives that are connected later",
+                    "manual": "Manually enter drives and labels"
+                },
+                "DefaultValue": "",
+                "ImageName": "drive-storage-redirection.png",
+                "InputType": "select",
+                "Clients": "Windows Desktop (MSRDC), Android, iOS, macOS, Web Client",
+                "Dependency": "",
+                "ManualInput": true
+            },
+            {
+                "Title": "Dynamic Resolution",
+                "Type": "Display Settings",
+                "SubType": "",
+                "Description": "Determines whether the resolution of the remote session is automatically updated when the local window is resized.",
+                "Example": "dynamic resolution:i:",
+                "Values": {
+                    "NotConfigured": "Not Configured",
+                    "0": "Session resolution remains static for the duration of the session",
+                    "1": "Session resolution updates as the local window resizes"
+                },
+                "DefaultValue": "1",
+                "ImageName": "dynamic-resolution.png",
+                "InputType": "select",
+                "Clients": "Windows Desktop (MSRDC), Windows Store (URDC), iOS, macOS, Web Client",
+                "Dependency": "",
+                "ManualInput": false
+            },
+            {
+                "Title": "Encoded Video Quality",
+                "Type": "Device Redirection",
+                "SubType": "Audio & Video",
+                "Description": "Controls the quality of encoded video.",
+                "Example": "redirected video capture encoding quality:i:",
+                "Values": {
+                    "NotConfigured": "Not Configured",
+                    "0": "High compression video. Quality may suffer when there is a lot of motion",
+                    "1": "Medium compression",
+                    "2": "Low compression video with high picture quality"
+                },
+                "DefaultValue": "0",
+                "ImageName": "encoded-video-quality.png",
+                "InputType": "select",
+                "Clients": "All",
+                "Dependency": "",
+                "ManualInput": false
+            },
+            {
+                "Title": "KDC Proxy Name",
+                "Type": "Connection Information",
+                "SubType": "",
+                "Description": "The fully qualified domain name of the desired KDC proxy",
+                "Example": "kdcproxyname:s:",
+                "Values": {},
+                "DefaultValue": "",
+                "ImageName": "kdc-proxy-name.png",
+                "InputType": "text",
+                "Clients": "All",
+                "Dependency": "",
+                "ManualInput": false
+            },
+            {
+                "Title": "Keyboard Redirection",
+                "Type": "Device Redirection",
+                "SubType": "Local Devices & Resources",
+                "Description": "Determines when Windows key combinations (WIN key, ALT+TAB) are applied to the remote session for desktop and RemoteApp connections.",
+                "Example": "keyboardhook:i:",
+                "Values": {
+                    "NotConfigured": "Not Configured",
+                    "0": "Windows key combinations are applied on the local computer",
+                    "1": "(Desktop only) Windows key combinations are applied on the remote computer when in focus",
+                    "2": "(Desktop only) Windows key combinations are applied on the remote computer in full screen mode only",
+                    "3": "(RemoteApp only) Windows key combinations are applied on the RemoteApp when in focus. Recommended to use this value only when publishing the Remote Desktop Connection app (mstsc.exe) from the host pool on Azure Virtual Desktop. This value is only supported when using the Windows Desktop client (MSRDC)."
+                },
+                "DefaultValue": "2",
+                "ImageName": "keyboard-redirection.png",
+                "InputType": "select",
+                "Clients": "All",
+                "Dependency": "",
+                "ManualInput": false
+            },
+            {
+                "Title": "Maximize to Current Displays",
+                "Type": "Display Settings",
+                "SubType": "",
+                "Description": "Determines which display the remote session goes full screen on when maximizing. Requires use multimon to be set to 1.",
+                "Example": "maximizetocurrentdisplays:i:",
+                "Values": {
+                    "NotConfigured": "Not Configured",
+                    "0": "Session goes full screen on the displays initially selected when maximizing",
+                    "1": "Session dynamically goes full screen on the displays touched by the session window when maximizing"
+                },
+                "DefaultValue": "0",
+                "ImageName": "maximize-to-current-displays.png",
+                "InputType": "select",
+                "Clients": "Windows Desktop (MSRDC)",
+                "Dependency": "Multiple Displays",
+                "ManualInput": false
+            },
+            {
+                "Title": "Microphone Redirection",
+                "Type": "Device Redirection",
+                "SubType": "Audio & Video",
+                "Description": "Determines how sounds captured (recorded) on the local computer are handled when you are connected to the remote computer.",
+                "Example": "audiocapturemode:i:",
+                "Values": {
+                    "NotConfigured": "Not Configured",
+                    "0": "Disable audio capture from the local device",
+                    "1": "Enable audio capture from the local device and redirection to an audio application in the remote session"
+                },
+                "DefaultValue": "0",
+                "ImageName": "microphone-redirection.png",
+                "InputType": "select",
+                "Clients": "All",
+                "Dependency": "",
+                "ManualInput": false
+            },
+            {
+                "Title": "Multi to Single Display Switch",
+                "Type": "Display Settings",
+                "SubType": "",
+                "Description": "Determines whether a multi display remote session automatically switches to single display when exiting full screen. Requires use multimon to be set to 1.",
+                "Example": "singlemoninwindowedmode:i:",
+                "Values": {
+                    "NotConfigured": "Not Configured",
+                    "0": "Session retains all displays when exiting full screen",
+                    "1": "Session switches to single display when exiting full screen"
+                },
+                "DefaultValue": "0",
+                "ImageName": "multi-to-single-display-switch.png",
+                "InputType": "select",
+                "Clients": "Windows Desktop (MSRDC)",
+                "Dependency": "Multiple Displays",
+                "ManualInput": false
+            },
+            {
+                "Title": "Multiple Displays",
+                "Type": "Display Settings",
+                "SubType": "",
+                "Description": "Determines whether the session should use true multiple monitor support when connecting to the remote computer.",
+                "Example": "use multimon:i:",
+                "Values": {
+                    "NotConfigured": "Not Configured",
+                    "0": "Don't enable multiple display support",
+                    "1": "Enable multiple display support"
+                },
+                "DefaultValue": "1",
+                "ImageName": "multiple-displays.png",
+                "InputType": "select",
+                "Clients": "Windows Desktop (MSRDC), macOS",
+                "Dependency": "",
+                "ManualInput": false
+            },
+            {
+                "Title": "Network Auto Detect",
+                "Type": "Session Behavior",
+                "SubType": "",
+                "Description": "Enables the option for automatic detection of the network type. Used in conjunction with networkautodetect. Also see connection type.",
+                "Example": "networkautodetect:i:",
+                "Values": {
+                    "NotConfigured": "Not Configured",
+                    "0": "Disable automatic network type detection",
+                    "1": "Enable automatic network type connection"
+                },
+                "DefaultValue": "1",
+                "ImageName": "network-auto-detect.png",
+                "InputType": "select",
+                "Clients": "All",
+                "Dependency": "",
+                "ManualInput": false
+            },
+            {
+                "Title": "MTP & PTP Device Redirection",
+                "Type": "Device Redirection",
+                "SubType": "Local Devices & Resources",
+                "Description": "Determines which devices on the local computer will be redirected and available in the remote session.",
+                "Example": "devicestoredirect:s:",
+                "Values": {
+                    "NotConfigured": "Not Configured",
+                    "null": "Don't redirect any devices",
+                    "*": "Redirect portable media players based on the Media Transfer Protocol (MTP) and digital cameras based on the Picture Transfer Protocol (PTP)"
+                },
+                "DefaultValue": "null",
+                "ImageName": "plug-and-play-device-redirection.png",
+                "InputType": "select",
+                "Clients": "All",
+                "Dependency": "",
+                "ManualInput": false
+            },
+            {
+                "Title": "Printer Redirection",
+                "Type": "Device Redirection",
+                "SubType": "Local Devices & Resources",
+                "Description": "Determines whether printers configured on the client computer will be redirected and available in the remote session.",
+                "Example": "redirectprinters:i:",
+                "Values": {
+                    "NotConfigured": "Not Configured",
+                    "0": "The printers on the local computer are not available in the remote session",
+                    "1": "The printers on the local computer are available in the remote session"
+                },
+                "DefaultValue": "1",
+                "ImageName": "printer-redirection.png",
+                "InputType": "select",
+                "Clients": "Windows Desktop (MSRDC), macOS",
+                "Dependency": "",
+                "ManualInput": false
+            },
+            {
+                "Title": "Reconnection",
+                "Type": "Session Behavior",
+                "SubType": "",
+                "Description": "Determines whether the client will automatically try to reconnect to the remote computer if the connection is dropped.",
+                "Example": "autoreconnection enabled:i:",
+                "Values": {
+                    "NotConfigured": "Not Configured",
+                    "0": "Client does not automatically try to reconnect",
+                    "1": "Client automatically tries to reconnect"
+                },
+                "DefaultValue": "1",
+                "ImageName": "reconnection.png",
+                "InputType": "select",
+                "Clients": "All",
+                "Dependency": "",
+                "ManualInput": false
+            },
+            {
+                "Title": "Redirect Video Encoding",
+                "Type": "Device Redirection",
+                "SubType": "Audio & Video",
+                "Description": "Enables or disables encoding of redirected video.",
+                "Example": "encode redirected video capture:i:",
+                "Values": {
+                    "NotConfigured": "Not Configured",
+                    "0": "Disable encoding of redirected video",
+                    "1": "Enable encoding of redirected video"
+                },
+                "DefaultValue": "1",
+                "ImageName": "redirect-video-encoding.png",
+                "InputType": "select",
+                "Clients": "All",
+                "Dependency": "",
+                "ManualInput": false
+            },
+            {
+                "Title": "Screen Mode",
+                "Type": "Display Settings",
+                "SubType": "",
+                "Description": "Determines whether the remote session window appears full screen when you connect to the remote computer.",
+                "Example": "screen mode id:i:",
+                "Values": {
+                    "NotConfigured": "Not Configured",
+                    "1": "The remote session will appear in a window",
+                    "2": "The remote session will appear full screen"
+                },
+                "DefaultValue": "2",
+                "ImageName": "screen-mode.png",
+                "InputType": "select",
+                "Clients": "All",
+                "Dependency": "",
+                "ManualInput": false
+            },
+            {
+                "Title": "Selected Monitors",
+                "Type": "Display Settings",
+                "SubType": "",
+                "Description": "Specifies which local displays to use from the remote session. The selected displays must be contiguous. Requires use multimon to be set to 1.",
+                "Example": "selectedmonitors:s:",
+                "Values": {
+                    "NotConfigured": "Not Configured",
+                    "null": "All displays",
+                    "manual": "Manually enter list of machine specific display IDs"
+                },
+                "DefaultValue": "",
+                "ImageName": "selected-monitors.png",
+                "InputType": "select",
+                "Clients": "Windows Desktop (MSRDC)",
+                "Dependency": "Multiple Displays",
+                "ManualInput": true
+            },
+            {
+                "Title": "Smart Card Redirection",
+                "Type": "Device Redirection",
+                "SubType": "Local Devices & Resources",
+                "Description": "Determines whether smart card devices on the local computer will be redirected and available in the remote session.",
+                "Example": "redirectsmartcards:i:",
+                "Values": {
+                    "NotConfigured": "Not Configured",
+                    "0": "The smart card device on the local computer is not available in the remote session",
+                    "1": "The smart card device on the local computer is available in the remote session"
+                },
+                "DefaultValue": "1",
+                "ImageName": "smart-card-redirection.png",
+                "InputType": "select",
+                "Clients": "Windows Desktop (MSRDC), macOS",
+                "Dependency": "",
+                "ManualInput": false
+            },
+            {
+                "Title": "Smart Sizing",
+                "Type": "Display Settings",
+                "SubType": "",
+                "Description": "Determines whether the client computer should scale the content on the remote computer to fit the window size of the client computer when the window is resized.",
+                "Example": "smart sizing:i:",
+                "Values": {
+                    "NotConfigured": "Not Configured",
+                    "0": "The local window content won't scale when resized",
+                    "1": "The local window content will scale when resized"
+                },
+                "DefaultValue": "0",
+                "ImageName": "smart-sizing.png",
+                "InputType": "select",
+                "Clients": "Windows Desktop (MSRDC), Microsoft Store (URDC), macOS",
+                "Dependency": "",
+                "ManualInput": false
+            },
+            {
+                "Title": "USB Redirection",
+                "Type": "Device Redirection",
+                "SubType": "Local Devices & Resources",
+                "Description": "Determines which supported RemoteFX USB devices on the client computer will be redirected and available in the remote session when you connect to a remote session that supports RemoteFX USB redirection.",
+                "Example": "usbdevicestoredirect:s:",
+                "Values": {
+                    "NotConfigured": "Not Configured",
+                    "null": "Don't redirect any USB devices",
+                    "*": "Redirect all USB devices that are not already redirected by another high-level redirection",
+                    "manual": "Redirect all devices that are members of the specified device setup class or devices defined by specific instance ID"
+                },
+                "DefaultValue": "",
+                "ImageName": "usb-redirection.png",
+                "InputType": "select",
+                "Clients": "Windows Desktop (MSRDC)",
+                "Dependency": "",
+                "ManualInput": true
+            },
+            {
+                "Title": "Video Playback",
+                "Type": "Session Behavior",
+                "SubType": "",
+                "Description": "Determines whether RDC will use RDP efficient multimedia streaming for video playback.",
+                "Example": "videoplaybackmode:i:",
+                "Values": {
+                    "NotConfigured": "Not Configured",
+                    "0": "Don't use RDP efficient multimedia streaming for video playback",
+                    "1": "Use RDP-efficient multimedia streaming for video playback when possible"
+                },
+                "DefaultValue": "1",
+                "ImageName": "video-playback.png",
+                "InputType": "select",
+                "Clients": "All",
+                "Dependency": "",
+                "ManualInput": false
+            }
+        ];
         const imageUri = 'https://';
 
         // Create RDP Properties
-        let propertiesLayout = document.getElementById("input")
+        let propertiesLayout = document.getElementById("properties")
         for (let i = 0; i < properties.length; i++) {
             let property = document.createElement("div");
+            property.style.display = "block";
             property.className = "property";
 
             // Property Image Div
@@ -665,7 +827,13 @@
                 input.setAttribute("id", i);
                 input.setAttribute("class", "input")
                 input.setAttribute("type", "text");
-                input.setAttribute("value", "NotConfigured");
+                if (properties[i].Title == "Alternate Shell") {
+                    input.setAttribute("placeholder", "C\\:\\\\ProgramFiles\\\\Office\\\\word.exe");
+                }
+                if (properties[i].Title == "KDC Proxy Name") {
+                    input.setAttribute("placeholder", "kdc.contoso.com");
+                }
+                // input.setAttribute("value", "NotConfigured");
                 input.setAttribute("onchange", "setProperties()");
                 info.appendChild(input);
                 property.appendChild(info);
@@ -680,7 +848,22 @@
                 select.setAttribute("name", i);
                 select.setAttribute("id", i);
                 select.setAttribute("class", "input");
-                select.setAttribute("onchange", "setProperties()");
+
+                if (properties[i].Title == "Multiple Displays") { 
+                    select.setAttribute("onchange", "setProperties(); enableInputs();");
+                }
+                else if (properties[i].Title == "Camera Redirection" || properties[i].Title == "Drive / Storage Redirection" || properties[i].Title == "Selected Monitors" || properties[i].Title == "USB Redirection") {
+                    select.setAttribute("onchange", "setProperties(); enableManualInput();");
+                }
+                else {
+                    select.setAttribute("onchange", "setProperties()");
+                }
+
+                // Disable inputs for display settings if Multiple Displays is not configured
+                if (properties[i].Title == "Selected Monitors" || properties[i].Title == "Maximize to Current Displays" || properties[i].Title == "Multi to Single Display Switch") {
+                    select.setAttribute("disabled", "disabled")
+                }
+
                 for (let i = 0; i < keys.length; i++) {
                     let option = document.createElement("option");
                     option.setAttribute("value", keys[i]);
@@ -695,13 +878,44 @@
                 property.appendChild(info);
             }
 
+            // Create  manual inputs for the properties that allow it
+            if(properties[i].ManualInput == true) {
+                let manualInput = document.createElement("input");
+                manualInput.setAttribute("class", "manual")
+                manualInput.setAttribute("type", "text");
+                manualInput.setAttribute("onchange", "setProperties()");
+                manualInput.setAttribute("disabled", "true");
+                if(properties[i].Title == "Camera Redirection") {
+                    manualInput.setAttribute("placeholder", "Example: \\?\\usb#vid_0bda&amp;pid_58b0&amp;mi\;\\?\\usb#vid_7cdd&amp;pid_54a1&amp;mi");
+                }
+                if(properties[i].Title == "Drive / Storage Redirection") {
+                    manualInput.setAttribute("placeholder", "Example: C\\:\\;E\\:\\");
+                }
+                if(properties[i].Title == "Selected Monitors") {
+                    manualInput.setAttribute("placeholder", "Example: ID0123, ID3456, ID23456");
+                }
+                if(properties[i].Title == "USB Redirection") {
+                    manualInput.setAttribute("placeholder", "Example: 72631e54-78a4-11d0-bcf7-00aa00b7b32a\;53d29ef7-377c-4d14-864b-eb3a85769359");
+                }
+                info.appendChild(manualInput);
+                property.appendChild(info);
+            }
+
+            // Add Dependency
+            
+            if(properties[i].Dependency != "") {
+                let dependency = document.createElement("p");
+                dependency.innerHTML = "<span class=\"bold\">Dependency:</span> <span class=\"dependency\">\"" + properties[i].Dependency + "\" must be enabled.</span>";
+                property.appendChild(dependency);
+            }
+            
             // Add Type & Sub-type
             let type = document.createElement("p");
             if(properties[i].SubType == "")
             {
-                type.innerHTML = "<span class=\"bold\">Type:</span> " + properties[i].Type;
+                type.innerHTML = "<span class=\"bold\">Type:</span> <span class=\"type\">" + properties[i].Type + "</span><span class=\"subtype\"></span>";
             } else {
-                type.innerHTML = "<span class=\"bold\">Type:</span> " + properties[i].Type + ", " + properties[i].SubType;
+                type.innerHTML = "<span class=\"bold\">Type:</span> <span class=\"type\">" + properties[i].Type + "</span>, <span class=\"subtype\">" + properties[i].SubType + "</span>";
             }
             property.appendChild(type);
 
@@ -712,7 +926,7 @@
 
             // Add Example
             let example = document.createElement("p");
-            example.innerHTML = "<span class=\"bold\">Example:</span> " + properties[i].Example + "<value>";
+            example.innerHTML = "<span class=\"bold\">Example:</span> " + properties[i].Example + "value";
             property.appendChild(example);
 
             // Add Allowed Values
@@ -738,25 +952,138 @@
 
             // Add Supported Clients
             let clients = document.createElement("p");
-            clients.innerHTML = "<span class=\"bold\">Supported Clients:</span> " + properties[i].SupportedClients;
+            clients.innerHTML = "<span class=\"bold\">Supported Clients:</span> <span class=\"client\">" + properties[i].Clients + "</span>";
             property.appendChild(clients);
 
             // Append Property to Input Div
             propertiesLayout.appendChild(property);
         }
 
+        // Enable display property inputs if Multiple Displays property is enabled
+        function enableInputs() {
+            let value = document.getElementById("21").value;
+            let ids = ["18", "20", "28"]
+            for(let i = 0; i < ids.length; i++) {
+                if(value == 1) {
+                    document.getElementById(ids[i]).disabled = false;
+                } else {
+                    document.getElementById(ids[i]).disabled = true;
+                    document.getElementById(ids[i]).value = "NotConfigured";
+                }
+            }
+        }
+
+        // Enable inputs for manual selections
+        function enableManualInput() {
+            let properties = document.getElementById("properties").getElementsByClassName("property");
+            for (let i = 0; i < properties.length; i++){
+                if(properties[i].getElementsByClassName("manual")[0] != undefined) {
+                    let value = document.getElementById(i).value;
+                    if(value == "manual") {
+                        properties[i].getElementsByClassName("manual")[0].disabled = false;                
+                    } else {
+                        properties[i].getElementsByClassName("manual")[0].disabled = true;                
+                    }
+                }
+            }
+        }
+
+        // Creates Custom RDP Properties string in Output Div
         function setProperties() {
             let output = "";
             for (let i = 0; i < properties.length; i++){
                 let value = document.getElementById(i).value;
-                if(!(value === "NotConfigured") || (!(value === "0") && properties[i].InputType === "number")){
-                    console.log(value);
-                    console.log(properties[i].InputType);
+                if(value == "null"){
+                    output += properties[i].Example + ";";
+                }
+                else if(value == "manual") {
+                    let property = document.getElementById("properties").getElementsByClassName("property")[i];
+                    let manualOutput = property.getElementsByClassName("manual")[0].value;
+                    if (manualOutput) {    
+                        output += properties[i].Example + manualOutput + ";";
+                    }
+                }
+                else if(properties[i].InputType == "number" && value > 199){
+                    output += properties[i].Example + value + ";";
+                }
+                else if (properties[i].InputType == "text" && value != "") {
+                    output += properties[i].Example + value + ";";
+                }
+                else if(properties[i].InputType == "select" && value != "NotConfigured"){
                     output += properties[i].Example + value + ";";
                 }
             }
             let outputText = document.getElementById("outputProperties");
             outputText.innerText = output;
+            copyName();
+        }
+        
+        // Copy RDP Properties to clipboard automatically
+        function copyName() {
+            let text = document.getElementById("outputProperties").textContent;
+            navigator.clipboard.writeText(text)
+                .then(() => {
+                    console.log(text);
+                })
+                .catch(err => {
+                    console.error('Error in copying text: ', err);
+                });
+        }
+
+        // Filter RDP properties based on title, supported clients, type, and subtype
+        function filterProperties() {
+            let properties = document.getElementById("properties").getElementsByClassName("property");
+            let filters = ["title", "client", "type", "subtype"];
+            let inputs = new Array;
+            filters.forEach(getInputs);
+            function getInputs (item, index) {
+                inputs.push(document.getElementById(item).value.toUpperCase());
+            }
+
+            // Disable Subtype filter unless Type filter equals Device Redirection
+            if (inputs[2] == "DEVICE REDIRECTION") {
+                document.getElementById("subtype").disabled = false;
+            } else {
+                document.getElementById("subtype").disabled = true;
+                document.querySelector("#subtype").value = "NONE";
+                document.getElementById("subtype").getElementsByTagName("option")[0].setAttribute("selected", "true");
+            }
+            
+            // Reset all properties to display first 
+            for (i = 0; i < properties.length; i++) {
+                properties[i].style.display = "block";
+            }
+
+            // Hide properties that don't match the selected filters
+            for (i = 0; i < properties.length; i++) {
+                // Show all properties if the filter inputs are not set to a value
+                if((!inputs[0]) && (inputs[1] == "NONE") && (inputs[2] == "NONE") && (inputs[3] == "NONE"))
+                {
+                    properties[i].style.display = "block";
+                } 
+                else 
+                {
+                    let title = properties[i].getElementsByClassName("title")[0].textContent.toUpperCase();
+                    let client = properties[i].getElementsByClassName("client")[0].textContent.toUpperCase();
+                    let type = properties[i].getElementsByClassName("type")[0].textContent.toUpperCase();
+                    let subtype = properties[i].getElementsByClassName("subtype")[0].textContent.toUpperCase();
+                    if (title.indexOf(inputs[0]) == -1 && inputs[0] != "") {
+                        properties[i].style.display = "none";
+                    }
+
+                    if (client.indexOf(inputs[1]) == -1 && client != "ALL" && inputs[1] != "NONE") {
+                        properties[i].style.display = "none";
+                    }
+
+                    if (type != inputs[2] && inputs[2] != "NONE") {
+                        properties[i].style.display = "none";
+                    }
+
+                    if (subtype != inputs[3] && inputs[3] != "NONE") {
+                        properties[i].style.display = "none";
+                    }
+                }
+            }
         }
     </script>
 </body>
